@@ -31,7 +31,9 @@ var exec = function exec(command) {
 
 var defaultActions = {
   bold: {
-    icon: '<b>B</b>',
+    icon: `<span class="material-symbols-outlined">
+    format_bold
+    </span>`,
     title: 'Bold',
     state: function state() {
       return queryCommandState('bold');
@@ -41,7 +43,9 @@ var defaultActions = {
     }
   },
   italic: {
-    icon: '<i>I</i>',
+    icon: `<span class="material-symbols-outlined">
+    format_italic
+    </span>`,
     title: 'Italic',
     state: function state() {
       return queryCommandState('italic');
@@ -51,7 +55,9 @@ var defaultActions = {
     }
   },
   underline: {
-    icon: '<u>U</u>',
+    icon: `<span class="material-symbols-outlined">
+    format_underlined
+    </span>`,
     title: 'Underline',
     state: function state() {
       return queryCommandState('underline');
@@ -61,7 +67,9 @@ var defaultActions = {
     }
   },
   strikethrough: {
-    icon: '<strike>S</strike>',
+    icon: `<span class="material-symbols-outlined">
+    format_strikethrough
+    </span>`,
     title: 'Strike-through',
     state: function state() {
       return queryCommandState('strikeThrough');
@@ -70,78 +78,54 @@ var defaultActions = {
       return exec('strikeThrough');
     }
   },
-  heading1: {
-    icon: '<b>H<sub>1</sub></b>',
-    title: 'Heading 1',
-    result: function result() {
-      return exec(formatBlock, '<h1>');
-    }
-  },
-  heading2: {
-    icon: '<b>H<sub>2</sub></b>',
-    title: 'Heading 2',
-    result: function result() {
-      return exec(formatBlock, '<h2>');
-    }
-  },
-  paragraph: {
-    icon: '&#182;',
-    title: 'Paragraph',
-    result: function result() {
-      return exec(formatBlock, '<p>');
-    }
-  },
-  quote: {
-    icon: '&#8220; &#8221;',
-    title: 'Quote',
-    result: function result() {
-      return exec(formatBlock, '<blockquote>');
-    }
-  },
   olist: {
-    icon: '&#35;',
+    icon: `<span class="material-symbols-outlined always-selected">
+    format_list_numbered
+    </span>`,
     title: 'Ordered List',
     result: function result() {
       return exec('insertOrderedList');
     }
   },
   ulist: {
-    icon: '&#8226;',
+    icon: `<span class="material-symbols-outlined always-selected">
+    format_list_bulleted
+    </span>`,
     title: 'Unordered List',
     result: function result() {
       return exec('insertUnorderedList');
     }
   },
-  code: {
-    icon: '&lt;/&gt;',
-    title: 'Code',
-    result: function result() {
-      return exec(formatBlock, '<pre>');
-    }
-  },
   line: {
-    icon: '&#8213;',
+    icon: `<span class="material-symbols-outlined always-selected">
+    horizontal_rule
+    </span>`,
     title: 'Horizontal Line',
     result: function result() {
       return exec('insertHorizontalRule');
     }
   },
   link: {
-    icon: '&#128279;',
+    icon: `<span class="material-symbols-outlined always-selected">
+    link
+    </span>`,
     title: 'Link',
     result: function result() {
-      var url = window.prompt('Enter the link URL');
-      if (url) exec('createLink', url);
+      link_dialog.open = true;
+      link_dialog.querySelector("input").focus();
     }
   },
   image: {
-    icon: '&#128247;',
+    icon: `<span class="material-symbols-outlined always-selected">
+    image
+    </span>`,
     title: 'Image',
     result: function result() {
+      return hidden_image_input.click()
       var url = window.prompt('Enter the image URL');
       if (url) exec('insertImage', url);
     }
-  }
+  },
 };
 
 var defaultClasses = {
@@ -192,6 +176,7 @@ var init = function init(settings) {
     button.title = action.title;
     button.setAttribute('type', 'button');
     button.onclick = function () {
+      pell_editor.focus();
       return action.result() && content.focus();
     };
 
@@ -220,5 +205,38 @@ exports.init = init;
 exports['default'] = pell;
 
 Object.defineProperty(exports, '__esModule', { value: true });
+var editor = init({
+  element: document.getElementById('pell-editor'),
+  defaultParagraphSeparator: 'div',
+  onChange: function (html) {
+  }
+})
+var pell_div = document.querySelector("#pell-editor")
+var pell_toolbar = pell_div.querySelector(".pell-actionbar")
+var pell_editor = pell_div.querySelector(".pell-content")
+var link_dialog = pell_div.querySelector("dialog.link-dialog")
+link_dialog.onclick = ()=>{
+  pell_editor.focus();
+  let url = link_dialog.querySelector("input").value;
+  if(url){
+    exec('createLink', url);
+  }
+  link_dialog.open = false;
+  pell_editor.focus();
+}
+
+var hidden_image_input = pell_div.querySelector("input.hidden_image_input")
+hidden_image_input.addEventListener("change", (event)=>{
+  let reader = new FileReader();
+  reader.onload = (e)=>{
+    let src = e.target.result;
+    pell_editor.focus();
+    exec("insertImage", src);
+  }
+  reader.onerror = (error)=>{
+    window.alert("File Error: "+error);
+  }
+  if(event.target.files[0]) reader.readAsDataURL(event.target.files[0])
+})
 
 })));
